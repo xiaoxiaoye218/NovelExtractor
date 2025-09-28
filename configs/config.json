@@ -80,9 +80,9 @@
         }
     },
     "DEFAULT_SYSTEM_PROMPT": "你是一个网文写手助手。",
-    "DEFAULT_STREAM": "False",
-    "DEFAULT_TEMPERATURE": "None",
-    "DEFAULT_TOP_P": "None",
-    "DEFAULT_MAX_TOKENS": "32000",
+    "DEFAULT_STREAM": false,
+    "DEFAULT_TEMPERATURE": null,
+    "DEFAULT_TOP_P": null,
+    "DEFAULT_MAX_TOKENS": 32000,
     "DEFAULT_DOUBAO_THINKING": "disabled"
 }
