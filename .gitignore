@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+
+
+# Binaries
+*.exe
+NovelExtractor.exe
+
+# PyInstaller artifacts
+/dist/
+/build/
+/*.spec
