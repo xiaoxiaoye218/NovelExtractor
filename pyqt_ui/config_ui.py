@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import (
 )
 
 from utils.paths import get_config_path
+from utils.i18n import t
 
 class ConfigUI(QWidget):
     config_saved = pyqtSignal()
@@ -37,7 +38,7 @@ class ConfigUI(QWidget):
         self.layout = QVBoxLayout(scroll_content)
 
         # Providers Group
-        providers_group = QGroupBox("Providers")
+        self.providers_group = QGroupBox(t('config.providers'))
         providers_layout = QVBoxLayout()
         self.tabs = QTabWidget()
         # Context menu for renaming providers via tab bar
@@ -45,18 +46,18 @@ class ConfigUI(QWidget):
         tab_bar.setContextMenuPolicy(Qt.CustomContextMenu)
         tab_bar.customContextMenuRequested.connect(self._on_tab_context_menu)
 
-        self.add_provider_button = QPushButton("添加 Provider")
+        self.add_provider_button = QPushButton(t('config.add_provider'))
         self.add_provider_button.clicked.connect(self.add_provider)
         providers_layout.addWidget(self.tabs)
         providers_layout.addWidget(self.add_provider_button)
-        providers_group.setLayout(providers_layout)
-        self.layout.addWidget(providers_group)
+        self.providers_group.setLayout(providers_layout)
+        self.layout.addWidget(self.providers_group)
 
         # Other settings Group
-        other_settings_group = QGroupBox("其他设置")
+        self.other_settings_group = QGroupBox(t('config.other_settings'))
         self.other_settings_layout = QFormLayout()
-        other_settings_group.setLayout(self.other_settings_layout)
-        self.layout.addWidget(other_settings_group)
+        self.other_settings_group.setLayout(self.other_settings_layout)
+        self.layout.addWidget(self.other_settings_group)
 
     def schedule_save(self):
         if not self._loading:
@@ -68,7 +69,7 @@ class ConfigUI(QWidget):
             with open(self.config_path, 'r', encoding='utf-8') as f:
                 self.config_data = json.load(f)
         except (FileNotFoundError, json.JSONDecodeError) as e:
-            QMessageBox.critical(self, "错误", f"无法加载配置文件: {e}")
+            QMessageBox.critical(self, t('common.error'), t('config.cannot_load', err=str(e)))
             self.config_data = {"PROVIDER_CONFIG": {}, "DEFAULT_SYSTEM_PROMPT": ""}
 
         self.tabs.clear()
@@ -96,10 +97,10 @@ class ConfigUI(QWidget):
         self._loading = False
 
     def add_provider(self):
-        provider_name, ok = QInputDialog.getText(self, "添加 Provider", "输入 Provider 名称 (例如: my_provider):")
+        provider_name, ok = QInputDialog.getText(self, t('config.add_provider_title'), t('config.add_provider_prompt'))
         if ok and provider_name:
             if provider_name in self.config_data.get("PROVIDER_CONFIG", {}):
-                QMessageBox.warning(self, "警告", "该 Provider 名称已存在。")
+                QMessageBox.warning(self, t('common.warning'), t('config.provider_exists'))
                 return
 
             new_config = {
@@ -146,20 +147,20 @@ class ConfigUI(QWidget):
             item = models_list.itemAt(point)
             menu = QMenu(models_list)
             if item is None:
-                add_action = menu.addAction("添加 Model")
+                add_action = menu.addAction(t('config.add_model'))
                 action = menu.exec_(models_list.mapToGlobal(point))
                 if action == add_action:
-                    model_name, ok = QInputDialog.getText(self, "添加 Model", "输入 Model 名称:")
+                    model_name, ok = QInputDialog.getText(self, t('config.add_model'), t('config.add_model_prompt'))
                     if ok and model_name:
                         models_list.addItem(model_name)
                         self.schedule_save()
                 return
             # When clicking on an existing item: only rename/delete
-            rename_action = menu.addAction("重命名 Model")
-            delete_action = menu.addAction("删除 Model")
+            rename_action = menu.addAction(t('config.rename_model'))
+            delete_action = menu.addAction(t('config.delete_model'))
             action = menu.exec_(models_list.mapToGlobal(point))
             if action == rename_action:
-                new_name, ok = QInputDialog.getText(self, "重命名 Model", "输入新的 Model 名称:", text=item.text())
+                new_name, ok = QInputDialog.getText(self, t('config.rename_model'), t('config.rename_model_prompt'), text=item.text())
                 if ok and new_name and new_name != item.text():
                     item.setText(new_name)
                     self.schedule_save()
@@ -188,14 +189,14 @@ class ConfigUI(QWidget):
         if index < 0:
             return
         menu = QMenu(self)
-        rename_action = menu.addAction("重命名 Provider")
-        delete_action = menu.addAction("删除 Provider")
+        rename_action = menu.addAction(t('config.rename_provider'))
+        delete_action = menu.addAction(t('config.delete_provider'))
         action = menu.exec_(tab_bar.mapToGlobal(pos))
         if action == rename_action:
             self.rename_provider(index)
         elif action == delete_action:
             name = self.tabs.widget(index).property("provider_name")
-            reply = QMessageBox.question(self, '确认', f"确定要删除 Provider '{name}' 吗?",
+            reply = QMessageBox.question(self, t('common.confirm'), t('config.delete_confirm', name=name),
                                          QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
             if reply == QMessageBox.Yes:
                 self.tabs.removeTab(index)
@@ -204,7 +205,7 @@ class ConfigUI(QWidget):
     def rename_provider(self, index: int):
         tab = self.tabs.widget(index)
         old_name = tab.property("provider_name")
-        new_name, ok = QInputDialog.getText(self, "重命名 Provider", "输入新的 Provider 名称:", text=old_name)
+        new_name, ok = QInputDialog.getText(self, t('config.rename_provider'), t('config.rename_provider_prompt'), text=old_name)
         if not ok or not new_name or new_name == old_name:
             return
         # Ensure uniqueness among provider names
@@ -213,7 +214,7 @@ class ConfigUI(QWidget):
                 continue
             other_tab = self.tabs.widget(i)
             if other_tab.property("provider_name") == new_name:
-                QMessageBox.warning(self, "警告", "该 Provider 名称已存在。")
+                QMessageBox.warning(self, t('common.warning'), t('config.provider_exists'))
                 return
         tab.setProperty("provider_name", new_name)
         self.tabs.setTabText(index, new_name)
@@ -255,7 +256,13 @@ class ConfigUI(QWidget):
             self.config_saved.emit()
             print("Configuration saved successfully.")
         except Exception as e:
-            QMessageBox.critical(self, "错误", f"无法保存配置文件: {e}")
+            QMessageBox.critical(self, t('common.error'), t('config.cannot_save', err=str(e)))
+
+    def update_language(self):
+        """Update UI text when language changes"""
+        self.providers_group.setTitle(t('config.providers'))
+        self.other_settings_group.setTitle(t('config.other_settings'))
+        self.add_provider_button.setText(t('config.add_provider'))
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

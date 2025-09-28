@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import (QApplication, QWidget, QVBoxLayout,
 from PyQt5.QtCore import Qt, QTimer, QEvent
 from PyQt5.QtGui import QFont, QColor
 from utils.readtxt import read_text_file
+from utils.i18n import t
 
 
 class ReaderUI(QWidget):
@@ -94,29 +95,29 @@ class ReaderUI(QWidget):
         left_layout = QVBoxLayout(left_frame)
         left_layout.setContentsMargins(10, 10, 10, 10)
 
-        title_label = QLabel("📚 文件浏览器")
-        title_label.setStyleSheet("""
+        self.title_label = QLabel(t('reader.browser_title'))
+        self.title_label.setStyleSheet("""
             font-size: 18px;
             font-weight: bold;
             color: #333;
             padding: 10px 0;
         """)
-        left_layout.addWidget(title_label)
+        left_layout.addWidget(self.title_label)
 
         dir_button_layout = QHBoxLayout()
 
-        self.select_dir_btn = QPushButton("选择文件夹")
+        self.select_dir_btn = QPushButton(t('reader.select_folder'))
         self.select_dir_btn.clicked.connect(self.select_directory)
         dir_button_layout.addWidget(self.select_dir_btn)
 
-        self.clear_dir_btn = QPushButton("清空")
+        self.clear_dir_btn = QPushButton(t('reader.clear'))
         self.clear_dir_btn.clicked.connect(self.clear_directories)
-        self.clear_dir_btn.setToolTip("清空所有文件夹")
+        self.clear_dir_btn.setToolTip(t('reader.clear_tooltip'))
         dir_button_layout.addWidget(self.clear_dir_btn)
 
         left_layout.addLayout(dir_button_layout)
 
-        self.dir_label = QLabel("未选择目录")
+        self.dir_label = QLabel(t('reader.no_dir'))
         self.dir_label.setWordWrap(True)
         self.dir_label.setStyleSheet("""
             font-size: 12px;
@@ -153,7 +154,7 @@ class ReaderUI(QWidget):
         toolbar_layout = QHBoxLayout(toolbar)
         toolbar_layout.setContentsMargins(0, 0, 0, 0)
 
-        self.file_title = QLabel("📖 请选择文件")
+        self.file_title = QLabel(t('reader.choose_file'))
         self.file_title.setStyleSheet("""
             font-size: 20px;
             font-weight: bold;
@@ -164,12 +165,12 @@ class ReaderUI(QWidget):
 
         toolbar_layout.addStretch()
 
-        self.edit_save_btn = QPushButton("编辑")
+        self.edit_save_btn = QPushButton(t('reader.edit'))
         self.edit_save_btn.clicked.connect(self.toggle_edit_mode)
         self.edit_save_btn.setEnabled(False) # Disable until a file is loaded
         toolbar_layout.addWidget(self.edit_save_btn)
 
-        self.font_size_label = QLabel("字体大小:")
+        self.font_size_label = QLabel(t('reader.font_size'))
         toolbar_layout.addWidget(self.font_size_label)
         
         self.font_size_value_label = QLabel(f"{self.text_display.font().pointSize()}px")
@@ -195,7 +196,7 @@ class ReaderUI(QWidget):
         status_layout = QHBoxLayout(status_bar)
         status_layout.setContentsMargins(0, 0, 0, 0)
 
-        self.status_label = QLabel("就绪")
+        self.status_label = QLabel(t('reader.ready'))
         self.status_label.setStyleSheet("""
             font-size: 12px;
             color: #666;
@@ -205,7 +206,7 @@ class ReaderUI(QWidget):
 
         status_layout.addStretch()
 
-        self.word_count_label = QLabel("字数: 0")
+        self.word_count_label = QLabel(t('reader.word_count', count=0))
         self.word_count_label.setStyleSheet("""
             font-size: 12px;
             color: #666;
@@ -242,8 +243,8 @@ class ReaderUI(QWidget):
         self.text_display.setPlainText(self._cached_raw_content)
         self.text_display.setReadOnly(False)
         self.text_display.textChanged.connect(self.on_text_changed)
-        self.status_label.setText("编辑模式")
-        self.edit_save_btn.setText("保存")
+        self.status_label.setText(t('reader.edit_mode'))
+        self.edit_save_btn.setText(t('reader.save'))
         self.text_display.setFocus()
 
     def leave_edit_mode(self, save=False):
@@ -259,8 +260,8 @@ class ReaderUI(QWidget):
         # 切换为预览模式并按 Markdown 渲染
         self.text_display.setReadOnly(True)
         self._render_preview(self._cached_raw_content)
-        self.status_label.setText("预览模式")
-        self.edit_save_btn.setText("编辑")
+        self.status_label.setText(t('reader.preview_mode'))
+        self.edit_save_btn.setText(t('reader.edit'))
         self.update_file_title()
 
     def on_text_changed(self):
@@ -285,16 +286,16 @@ class ReaderUI(QWidget):
             self.last_modified_time = os.path.getmtime(self.current_file)
             self.is_dirty = False
             self.update_file_title()
-            self.status_label.setText(f"已保存: {os.path.basename(self.current_file)}")
+            self.status_label.setText(t('reader.saved', name=os.path.basename(self.current_file)))
 
             word_count = len(self._cached_raw_content.replace('\n', '').replace(' ', ''))
-            self.word_count_label.setText(f"字数: {word_count:,}")
+            self.word_count_label.setText(t('reader.word_count', count=f"{word_count:,}"))
 
         except Exception as e:
-            self.status_label.setText(f"自动保存失败: {str(e)}")
+            self.status_label.setText(t('reader.autosave_failed', err=str(e)))
 
     def select_directory(self):
-        directory = QFileDialog.getExistingDirectory(self, "选择文件夹", self.current_directory or "")
+        directory = QFileDialog.getExistingDirectory(self, t('reader.select_folder'), self.current_directory or "")
         if directory and directory not in self.directories:
             self.directories.append(directory)
             if not self.current_directory:
@@ -307,20 +308,20 @@ class ReaderUI(QWidget):
         self.current_directory = ""
         self.file_list.clear()
         self.directory_items.clear()
-        self.dir_label.setText("未选择目录")
-        self.status_label.setText("已清空所有文件夹")
+        self.dir_label.setText(t('reader.no_dir'))
+        self.status_label.setText(t('reader.cleared_all'))
 
     def update_directory_display(self):
         if not self.directories:
-            self.dir_label.setText("未选择目录")
+            self.dir_label.setText(t('reader.no_dir'))
         elif len(self.directories) == 1:
-            self.dir_label.setText(f"当前目录: {self.directories[0]}")
+            self.dir_label.setText(t('reader.current_dir', path=self.directories[0]))
         else:
-            dir_text = f"已选择 {len(self.directories)} 个文件夹:\n"
+            dir_text = t('reader.selected_dirs_header', count=len(self.directories)) + "\n"
             for i, dir_path in enumerate(self.directories[:3], 1):
                 dir_text += f"{i}. {os.path.basename(dir_path)}\n"
             if len(self.directories) > 3:
-                dir_text += f"... 还有 {len(self.directories) - 3} 个"
+                dir_text += t('reader.more_dirs', rest=len(self.directories) - 3)
             self.dir_label.setText(dir_text.strip())
 
     def load_all_files(self):
@@ -363,10 +364,10 @@ class ReaderUI(QWidget):
                 file_item = QTreeWidgetItem(folder_item, [f"  📄 {filename}"])
                 file_item.setData(0, Qt.UserRole, full_path)
             
-            self.status_label.setText(f"已添加目录: {directory}")
+            self.status_label.setText(t('reader.added_dir', path=directory))
 
         except Exception as e:
-            self.status_label.setText(f"读取文件夹失败: {directory} - {str(e)}")
+            self.status_label.setText(t('reader.read_dir_failed', path=directory, err=str(e)))
 
 
     def on_tree_item_clicked(self, item, column):
@@ -406,12 +407,12 @@ class ReaderUI(QWidget):
             self.edit_save_btn.setEnabled(True)
 
             word_count = len(content.replace('\n', '').replace(' ', ''))
-            self.word_count_label.setText(f"字数: {word_count:,}")
-            self.status_label.setText("预览模式")
+            self.word_count_label.setText(t('reader.word_count', count=f"{word_count:,}"))
+            self.status_label.setText(t('reader.preview_mode'))
 
         except Exception as e:
             self.text_display.setPlainText(f"读取文件失败: {str(e)}")
-            self.status_label.setText(f"读取失败: {os.path.basename(filepath)}")
+            self.status_label.setText(t('reader.file_read_failed', name=os.path.basename(filepath)))
             self.edit_save_btn.setEnabled(False)
 
 
@@ -449,7 +450,7 @@ class ReaderUI(QWidget):
 
     def update_file_title(self):
         if not self.current_file:
-            self.file_title.setText("📖 请选择文件")
+            self.file_title.setText(t('reader.choose_file'))
             return
 
         title = os.path.basename(self.current_file)
@@ -463,7 +464,7 @@ class ReaderUI(QWidget):
         current_font.setPointSize(new_size)
         self.text_display.setFont(current_font)
         self.font_size_value_label.setText(f"{new_size}px")
-        self.status_label.setText(f"字体大小: {new_size}px")
+        self.status_label.setText(t('reader.font_size_status', size=new_size))
 
     def decrease_font_size(self):
         current_font = self.text_display.font()
@@ -471,7 +472,7 @@ class ReaderUI(QWidget):
         current_font.setPointSize(new_size)
         self.text_display.setFont(current_font)
         self.font_size_value_label.setText(f"{new_size}px")
-        self.status_label.setText(f"字体大小: {new_size}px")
+        self.status_label.setText(t('reader.font_size_status', size=new_size))
 
     def check_file_changes(self):
         if not self.current_file or not os.path.exists(self.current_file) or not self.text_display.isReadOnly():
@@ -485,7 +486,7 @@ class ReaderUI(QWidget):
                     self.reload_current_file(new_content)
                 self.last_modified_time = current_modified_time
         except Exception as e:
-            self.status_label.setText(f"文件监控出错: {str(e)}")
+            self.status_label.setText(t('reader.file_monitor_error', err=str(e)))
 
     def reload_current_file(self, new_content=None):
         if not self.current_file: return
@@ -508,9 +509,9 @@ class ReaderUI(QWidget):
                 self._render_preview(new_content)
 
             self.last_modified_time = os.path.getmtime(self.current_file)
-            self.status_label.setText("文件已从外部更新并重新加载")
+            self.status_label.setText(t('reader.file_reloaded'))
             word_count = len(new_content.replace('\n', '').replace(' ', ''))
-            self.word_count_label.setText(f"字数: {word_count:,}")
+            self.word_count_label.setText(t('reader.word_count', count=f"{word_count:,}"))
 
         except Exception as e:
             self.status_label.setText(f"重新加载文件失败: {str(e)}")
@@ -519,7 +520,7 @@ class ReaderUI(QWidget):
         item = self.file_list.itemAt(pos)
         if item and item.parent() is None: # It's a top-level item (folder)
             menu = QMenu()
-            close_action = menu.addAction("关闭文件夹")
+            close_action = menu.addAction(t('reader.close_folder'))
             action = menu.exec_(self.file_list.mapToGlobal(pos))
             if action == close_action:
                 self.close_folder(item)
@@ -532,10 +533,10 @@ class ReaderUI(QWidget):
             # If the closed folder contained the currently open file, clear the display
             if self.current_file and self.current_file.startswith(directory_to_close):
                 self.text_display.clear()
-                self.file_title.setText("📖 请选择文件")
+                self.file_title.setText(t('reader.choose_file'))
                 self.current_file = None
                 self._cached_raw_content = ""
-                self.word_count_label.setText("字数: 0")
+                self.word_count_label.setText(t('reader.word_count', count=0))
                 self.edit_save_btn.setEnabled(False)
 
             # Remove from tree and dictionary
@@ -546,4 +547,24 @@ class ReaderUI(QWidget):
                 del self.directory_items[directory_to_close]
 
             self.update_directory_display()
-            self.status_label.setText(f"已关闭文件夹: {os.path.basename(directory_to_close)}")
+            self.status_label.setText(t('reader.folder_closed', name=os.path.basename(directory_to_close)))
+
+    def update_language(self):
+        """Update UI text when language changes"""
+        self.title_label.setText(t('reader.browser_title'))
+        self.select_dir_btn.setText(t('reader.select_folder'))
+        self.clear_dir_btn.setText(t('reader.clear'))
+        self.clear_dir_btn.setToolTip(t('reader.clear_tooltip'))
+        self.edit_save_btn.setText(t('reader.edit') if self.text_display.isReadOnly() else t('reader.save'))
+        self.font_size_label.setText(t('reader.font_size'))
+
+        # Update directory display
+        self.update_directory_display()
+
+        # Update file title
+        self.update_file_title()
+
+        # Update status if no file is selected
+        if not self.current_file:
+            self.status_label.setText(t('reader.ready'))
+            self.word_count_label.setText(t('reader.word_count', count=0))

@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import QThread, pyqtSignal, Qt
 from utils.paths import get_config_path
-
+from utils.i18n import t
 
 from app.query import Query
 
@@ -71,9 +71,9 @@ class QueryUI(QWidget):
 
         # Input Path
         input_path_layout = QHBoxLayout()
-        self.input_path_label = QLabel("输入目录:")
+        self.input_path_label = QLabel(t('common.input_dir'))
         self.input_path_edit = QLineEdit()
-        self.input_path_button = QPushButton("选择目录")
+        self.input_path_button = QPushButton(t('common.select_dir'))
         self.input_path_button.clicked.connect(lambda: self.select_directory(self.input_path_edit))
         input_path_layout.addWidget(self.input_path_label)
         input_path_layout.addWidget(self.input_path_edit)
@@ -82,9 +82,9 @@ class QueryUI(QWidget):
 
         # Output Path
         output_path_layout = QHBoxLayout()
-        self.output_path_label = QLabel("输出目录:")
+        self.output_path_label = QLabel(t('common.output_dir'))
         self.output_path_edit = QLineEdit()
-        self.output_path_button = QPushButton("选择目录")
+        self.output_path_button = QPushButton(t('common.select_dir'))
         self.output_path_button.clicked.connect(lambda: self.select_directory(self.output_path_edit))
         output_path_layout.addWidget(self.output_path_label)
         output_path_layout.addWidget(self.output_path_edit)
@@ -93,7 +93,7 @@ class QueryUI(QWidget):
 
         # Provider
         provider_layout = QHBoxLayout()
-        self.provider_label = QLabel("提供商:")
+        self.provider_label = QLabel(t('query.provider'))
         self.provider_combo = QComboBox()
         self.provider_combo.currentIndexChanged.connect(self.update_model_combo)
         provider_layout.addWidget(self.provider_label)
@@ -102,7 +102,7 @@ class QueryUI(QWidget):
 
         # Model
         model_layout = QHBoxLayout()
-        self.model_label = QLabel("模型ID:")
+        self.model_label = QLabel(t('query.model_id'))
         self.model_combo = QComboBox()
         model_layout.addWidget(self.model_label)
         model_layout.addWidget(self.model_combo)
@@ -110,7 +110,7 @@ class QueryUI(QWidget):
 
         # Concurrent
         concurrent_layout = QHBoxLayout()
-        self.concurrent_label = QLabel("并发数量:")
+        self.concurrent_label = QLabel(t('query.concurrent'))
         self.concurrent_spin = QSpinBox()
         self.concurrent_spin.setRange(1, 1000)
         self.concurrent_spin.setValue(100)
@@ -120,7 +120,7 @@ class QueryUI(QWidget):
 
         # Batch Size
         batch_size_layout = QHBoxLayout()
-        self.batch_size_label = QLabel("批次大小:")
+        self.batch_size_label = QLabel(t('query.batch_size'))
         self.batch_size_spin = QSpinBox()
         self.batch_size_spin.setRange(1, 1000)
         self.batch_size_spin.setValue(30)
@@ -130,10 +130,10 @@ class QueryUI(QWidget):
 
         # Prompt Path
         prompt_path_layout = QHBoxLayout()
-        self.prompt_path_label = QLabel("Prompt文件:")
+        self.prompt_path_label = QLabel(t('query.prompt_file'))
         self.prompt_path_edit = QLineEdit()
-        self.prompt_path_button = QPushButton("选择文件")
-        self.prompt_path_button.clicked.connect(lambda: self.select_file(self.prompt_path_edit, "Text Files (*.txt)"))
+        self.prompt_path_button = QPushButton(t('common.select_file'))
+        self.prompt_path_button.clicked.connect(lambda: self.select_file(self.prompt_path_edit, t('common.text_files_filter')))
         prompt_path_layout.addWidget(self.prompt_path_label)
         prompt_path_layout.addWidget(self.prompt_path_edit)
         prompt_path_layout.addWidget(self.prompt_path_button)
@@ -141,7 +141,7 @@ class QueryUI(QWidget):
 
         # Name Prefix
         name_prefix_layout = QHBoxLayout()
-        self.name_prefix_label = QLabel("输出文件名前缀:")
+        self.name_prefix_label = QLabel(t('query.output_prefix'))
         self.name_prefix_edit = QLineEdit("查询结果")
         name_prefix_layout.addWidget(self.name_prefix_label)
         name_prefix_layout.addWidget(self.name_prefix_edit)
@@ -149,7 +149,7 @@ class QueryUI(QWidget):
 
         # Start Position
         start_pos_layout = QHBoxLayout()
-        self.start_pos_label = QLabel("起始位置 (可选):")
+        self.start_pos_label = QLabel(t('query.start_pos'))
         self.start_pos_spin = QSpinBox()
         self.start_pos_spin.setRange(0, 999999) # 0 means None
         self.start_pos_spin.setValue(0)
@@ -159,7 +159,7 @@ class QueryUI(QWidget):
 
         # End Position
         end_pos_layout = QHBoxLayout()
-        self.end_pos_label = QLabel("终止位置 (可选):")
+        self.end_pos_label = QLabel(t('query.end_pos'))
         self.end_pos_spin = QSpinBox()
         self.end_pos_spin.setRange(0, 999999) # 0 means None
         self.end_pos_spin.setValue(0)
@@ -169,9 +169,9 @@ class QueryUI(QWidget):
 
         # Run button
         run_button_layout = QHBoxLayout()
-        self.run_button = QPushButton("开始查询")
+        self.run_button = QPushButton(t('query.start'))
         self.run_button.clicked.connect(self.run_query)
-        self.stop_button = QPushButton("中止")
+        self.stop_button = QPushButton(t('common.stop'))
         self.stop_button.clicked.connect(self.stop_query)
         self.stop_button.setEnabled(False)
         run_button_layout.addWidget(self.run_button)
@@ -189,7 +189,7 @@ class QueryUI(QWidget):
 
     def show_log_context_menu(self, pos):
         context_menu = QMenu(self)
-        clear_action = context_menu.addAction("清除日志")
+        clear_action = context_menu.addAction(t('common.clear_log'))
         action = context_menu.exec_(self.log_edit.mapToGlobal(pos))
         if action == clear_action:
             self.log_edit.clear()
@@ -212,12 +212,12 @@ class QueryUI(QWidget):
                     self.model_combo.setCurrentText(default_model)
 
     def select_directory(self, line_edit):
-        dir_path = QFileDialog.getExistingDirectory(self, "选择目录")
+        dir_path = QFileDialog.getExistingDirectory(self, t('common.select_dir'))
         if dir_path:
             line_edit.setText(dir_path)
 
     def select_file(self, line_edit, file_filter):
-        file_path, _ = QFileDialog.getOpenFileName(self, "选择文件", "", file_filter)
+        file_path, _ = QFileDialog.getOpenFileName(self, t('common.select_file'), "", file_filter)
         if file_path:
             line_edit.setText(file_path)
 
@@ -230,7 +230,7 @@ class QueryUI(QWidget):
                     self.worker.query_processor.request_cancel()
             except Exception:
                 pass
-            self.log_edit.append("正在中止任务...")
+            self.log_edit.append(t('query.stopping'))
             # 中止进行中时，开始/中止按钮都置灰
             self.run_button.setEnabled(False)
             self.stop_button.setEnabled(False)
@@ -251,17 +251,17 @@ class QueryUI(QWidget):
         if end_pos == 0: end_pos = None
 
         if not input_path or not os.path.isdir(input_path):
-            self.log_edit.append("错误: 请选择一个有效的输入目录。")
+            self.log_edit.append(t('query.invalid_input_dir'))
             return
         if not output_path:
-            self.log_edit.append("错误: 请选择一个有效的输出目录。")
+            self.log_edit.append(t('query.invalid_output_dir'))
             return
         if not prompt_path or not os.path.exists(prompt_path):
-            self.log_edit.append("错误: 请选择一个有效的Prompt文件。")
+            self.log_edit.append(t('query.invalid_prompt'))
             return
 
         self.log_edit.clear()
-        self.log_edit.append("开始查询...")
+        self.log_edit.append(t('query.started'))
 
         try:
             query_processor = Query(
@@ -287,19 +287,37 @@ class QueryUI(QWidget):
             self.worker.start()
 
         except Exception as e:
-            self.log_edit.append(f"初始化查询处理器失败: {e}")
+            self.log_edit.append(t('query.init_failed', err=str(e)))
             self.run_button.setEnabled(True)
             self.stop_button.setEnabled(False)
 
     def query_finished(self):
         if self.worker.isInterruptionRequested():
-            self.log_edit.append("任务已中止。")
+            self.log_edit.append(t('query.stopped'))
         else:
-            self.log_edit.append("所有任务处理完成。")
+            self.log_edit.append(t('query.completed'))
         self.run_button.setEnabled(True)
         self.stop_button.setEnabled(False)
 
     def query_error(self, error_message):
-        self.log_edit.append(f"查询过程中发生错误: {error_message}")
+        self.log_edit.append(t('query.run_error', err=error_message))
         self.run_button.setEnabled(True)
         self.stop_button.setEnabled(False)
+
+    def update_language(self):
+        """Update UI text when language changes"""
+        self.input_path_label.setText(t('common.input_dir'))
+        self.output_path_label.setText(t('common.output_dir'))
+        self.provider_label.setText(t('query.provider'))
+        self.model_label.setText(t('query.model_id'))
+        self.concurrent_label.setText(t('query.concurrent'))
+        self.batch_size_label.setText(t('query.batch_size'))
+        self.prompt_path_label.setText(t('query.prompt_file'))
+        self.name_prefix_label.setText(t('query.output_prefix'))
+        self.start_pos_label.setText(t('query.start_pos'))
+        self.end_pos_label.setText(t('query.end_pos'))
+        self.input_path_button.setText(t('common.select_dir'))
+        self.output_path_button.setText(t('common.select_dir'))
+        self.prompt_path_button.setText(t('common.select_file'))
+        self.run_button.setText(t('query.start'))
+        self.stop_button.setText(t('common.stop'))
