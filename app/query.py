@@ -93,20 +93,19 @@ class Query:
 
     def _natural_sort_files(self, files: List[str]) -> List[str]:
         """
-        对文件列表进行自然排序，确保第2章排在第10章前面
+        对文件列表进行自然排序，只提取最后的下划线后面的数字进行排序
+        例如：第140章__不懂规矩？_140.txt → 提取140，章节提取_140.txt → 提取140
         """
         def natural_key(filename):
             # 提取文件名中的数字
             basename = os.path.basename(filename)
-            # 匹配章节号（第X章格式）
-            match = re.search(r'第(\d+)章', basename)
+            
+            # 只匹配最后的下划线后面的数字（如_140.txt中的140）
+            match = re.search(r'_(\d+)\.txt$', basename)
             if match:
                 return int(match.group(1))
-            # 如果没有章节号，尝试匹配其他数字
-            numbers = re.findall(r'\d+', basename)
-            if numbers:
-                return tuple(int(n) for n in numbers)
-            # 没有数字的按字母排序
+            
+            # 如果没有找到最后的下划线数字，按文件名排序
             return (float('inf'), basename)
         
         return sorted(files, key=natural_key)

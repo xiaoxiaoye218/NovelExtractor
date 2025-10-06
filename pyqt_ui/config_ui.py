@@ -1,6 +1,6 @@
 import sys
 import json
-from PyQt5.QtCore import pyqtSignal, QTimer, Qt
+from PyQt5.QtCore import QTimer, Qt
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QFormLayout, QLineEdit,
     QComboBox, QPushButton, QListWidget, QAbstractItemView, QMessageBox,
@@ -11,7 +11,6 @@ from utils.paths import get_config_path
 from utils.i18n import t
 
 class ConfigUI(QWidget):
-    config_saved = pyqtSignal()
 
     def __init__(self):
         super().__init__()
@@ -68,9 +67,12 @@ class ConfigUI(QWidget):
         try:
             with open(self.config_path, 'r', encoding='utf-8') as f:
                 self.config_data = json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError) as e:
+        except FileNotFoundError:
+            # 如果文件不存在，创建空的配置，不覆盖现有配置
+            self.config_data = {}
+        except json.JSONDecodeError as e:
             QMessageBox.critical(self, t('common.error'), t('config.cannot_load', err=str(e)))
-            self.config_data = {"PROVIDER_CONFIG": {}, "DEFAULT_SYSTEM_PROMPT": ""}
+            return
 
         self.tabs.clear()
         # Clear old widgets from other_settings_layout
@@ -89,7 +91,15 @@ class ConfigUI(QWidget):
         for key, value in self.config_data.items():
             if key != "PROVIDER_CONFIG":
                 label = key
-                widget = QLineEdit(str(value))
+                # 根据数据类型显示合适的值
+                if value is None:
+                    display_value = ""
+                elif isinstance(value, bool):
+                    display_value = str(value)
+                else:
+                    display_value = str(value)
+                
+                widget = QLineEdit(display_value)
                 widget.textChanged.connect(self.schedule_save)
                 self.other_settings_layout.addRow(label, widget)
                 self.other_widgets[key] = widget
@@ -245,15 +255,35 @@ class ConfigUI(QWidget):
             }
         new_config_data["PROVIDER_CONFIG"] = provider_config
 
-        # Save other settings
+        # Save other settings - 保持原始数据类型
         for key, widget in self.other_widgets.items():
-            new_config_data[key] = widget.text()
+            text_value = widget.text()
+            original_value = self.config_data.get(key)
+            
+            # 如果原始值为None，且输入为空，则保持None
+            if original_value is None and text_value == "":
+                new_config_data[key] = None
+            # 如果原始值是布尔类型，则转换为布尔值
+            elif isinstance(original_value, bool):
+                new_config_data[key] = text_value.lower() in ('true', '1', 'yes', 'on')
+            # 如果原始值是数字类型，则尝试转换为数字
+            elif isinstance(original_value, (int, float)):
+                try:
+                    if '.' in text_value:
+                        new_config_data[key] = float(text_value)
+                    else:
+                        new_config_data[key] = int(text_value)
+                except ValueError:
+                    # 转换失败则保持原始值
+                    new_config_data[key] = original_value
+            else:
+                # 其他情况保持字符串类型
+                new_config_data[key] = text_value
 
         try:
             with open(self.config_path, 'w', encoding='utf-8') as f:
                 json.dump(new_config_data, f, indent=4, ensure_ascii=False)
             self.config_data = new_config_data
-            self.config_saved.emit()
             print("Configuration saved successfully.")
         except Exception as e:
             QMessageBox.critical(self, t('common.error'), t('config.cannot_save', err=str(e)))

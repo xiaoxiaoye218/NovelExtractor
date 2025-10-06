@@ -38,14 +38,14 @@
         "doubao": {
             "type": "openai",
             "base_url": "https://ark.cn-beijing.volces.com/api/v3",
-            "api_key": "",
+            "api_key": "aa5f83de-c539-47df-849e-266a6a937eaa",
             "models": [
                 "doubao-seed-1-6-250615",
                 "doubao-seed-1-6-thinking-250715",
                 "doubao-seed-1-6-flash-250828",
                 "deepseek-r1-250528",
-                "kimi-k2-250711",
-                "ep-20250711213237-vtmpn"
+                "kimi-k2-250905",
+                "deepseek-v3-1-terminus"
             ]
         },
         "siliconflow": {

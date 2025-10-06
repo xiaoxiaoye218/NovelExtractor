@@ -47,9 +47,6 @@ class MainWindow(QMainWindow):
         self.language_tab = LanguageUI()
         self.tabs.addTab(self.language_tab, t('language.label'))
 
-
-        self.config_tab.config_saved.connect(self.query_tab.reload_config_and_update_ui)
-
         # Connect language change signal to all tabs
         # From Language tab -> MainWindow
         self.language_tab.language_changed.connect(self.handle_language_change)
